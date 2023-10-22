@@ -789,7 +789,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e5166d704fff314597de8466c4b055a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 7
+  walkSpeed: 7
+  sprintSpeed: 10
   playerHeight: 2
   groundDrag: 5
   whatIsGround:
@@ -799,7 +800,9 @@ MonoBehaviour:
   jumpCooldown: 0.25
   airMultiplier: 0.4
   jumpKey: 32
+  sprintKey: 304
   orientation: {fileID: 1927566579}
+  state: 0
 --- !u!1 &2076726368
 GameObject:
   m_ObjectHideFlags: 0
