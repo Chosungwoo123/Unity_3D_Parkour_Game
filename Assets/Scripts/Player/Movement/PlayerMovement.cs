@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -70,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
     #region UI
 
     [Space(10)] [Header("UI")] 
-    public Text text_speed;
+    public TextMeshProUGUI text_speed;
 
     #endregion
     
@@ -235,9 +236,13 @@ public class PlayerMovement : MonoBehaviour
             if (rigid.velocity.magnitude > moveSpeed)
             {
                 rigid.velocity = rigid.velocity.normalized * moveSpeed;
+                
+                text_speed.SetText("Speed : " + rigid.velocity.magnitude);
+
+                return;
             }
             
-            text_speed.text = "Speed : " + rigid.velocity.magnitude;
+            text_speed.SetText("Speed : " + rigid.velocity.magnitude);
         }
         
         // Limiting speed on ground or in air
@@ -250,12 +255,14 @@ public class PlayerMovement : MonoBehaviour
             {
                 Vector3 limitedVel = flatVel.normalized * moveSpeed;
                 rigid.velocity = new Vector3(limitedVel.x, rigid.velocity.y, limitedVel.z);
+                
+                text_speed.SetText("Speed : " + limitedVel.magnitude);
+
+                return;
             }
             
-            text_speed.text = "Speed : " + flatVel.magnitude;
+            text_speed.SetText("Speed : " + flatVel.magnitude);
         }
-        
-        
     }
     
     private void Jump()
