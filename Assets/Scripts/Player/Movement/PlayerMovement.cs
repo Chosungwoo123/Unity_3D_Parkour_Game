@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -45,6 +46,18 @@ public class PlayerMovement : MonoBehaviour
 
     #endregion
 
+    #region Slope Handling
+
+    [Space(10)] 
+    [Header("Slope Handling")] 
+    public float maxSlopeAngle;
+
+    private bool exitingSlope;
+    
+    private RaycastHit slopeHit;
+
+    #endregion
+
     #region Keybinds
 
     [Space(10)] [Header("Keybinds")] 
@@ -54,6 +67,13 @@ public class PlayerMovement : MonoBehaviour
 
     #endregion
 
+    #region UI
+
+    [Space(10)] [Header("UI")] 
+    public Text text_speed;
+
+    #endregion
+    
     [Space(10)]
     [SerializeField] private Transform orientation;
 
@@ -181,6 +201,17 @@ public class PlayerMovement : MonoBehaviour
         // Calculate movement direction
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         
+        // On Slope
+        if (OnSlope() && !exitingSlope)
+        {
+            rigid.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
+
+            if (rigid.velocity.y > 0)
+            { 
+                rigid.AddForce(Vector3.down * 80f, ForceMode.Force);
+            }
+        }
+        
         // On ground
         if (grounded)
         {
@@ -191,22 +222,46 @@ public class PlayerMovement : MonoBehaviour
         {
             rigid.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);   
         }
+        
+        // Turn gravity off while on slope
+        rigid.useGravity = !OnSlope();
     }
     
     private void SpeedControl()
     {
-        Vector3 flatVel = new Vector3(rigid.velocity.x, 0f, rigid.velocity.z);
-        
-        // Limit velocity if needed
-        if (flatVel.magnitude > moveSpeed)
+        // Limiting speed on slope
+        if (OnSlope() && !exitingSlope)
         {
-            Vector3 limitedVel = flatVel.normalized * moveSpeed;
-            rigid.velocity = new Vector3(limitedVel.x, rigid.velocity.y, limitedVel.z);
+            if (rigid.velocity.magnitude > moveSpeed)
+            {
+                rigid.velocity = rigid.velocity.normalized * moveSpeed;
+            }
+            
+            text_speed.text = "Speed : " + rigid.velocity.magnitude;
         }
+        
+        // Limiting speed on ground or in air
+        else
+        {
+            Vector3 flatVel = new Vector3(rigid.velocity.x, 0f, rigid.velocity.z);
+        
+            // Limit velocity if needed
+            if (flatVel.magnitude > moveSpeed)
+            {
+                Vector3 limitedVel = flatVel.normalized * moveSpeed;
+                rigid.velocity = new Vector3(limitedVel.x, rigid.velocity.y, limitedVel.z);
+            }
+            
+            text_speed.text = "Speed : " + flatVel.magnitude;
+        }
+        
+        
     }
     
     private void Jump()
     {
+        exitingSlope = true;
+        
         // Reset y velocity
         rigid.velocity = new Vector3(rigid.velocity.x, 0f, rigid.velocity.z);
         
@@ -216,5 +271,24 @@ public class PlayerMovement : MonoBehaviour
     private void ResetJump()
     {
         readyToJump = true;
+
+        exitingSlope = false;
+    }
+
+    private bool OnSlope()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
+        {
+            float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
+
+            return angle < maxSlopeAngle && angle != 0;
+        }
+
+        return false;
+    }
+    
+    private Vector3 GetSlopeMoveDirection()
+    {
+        return Vector3.ProjectOnPlane(moveDirection, slopeHit.normal).normalized;
     }
 }
