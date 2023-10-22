@@ -37,8 +37,11 @@ public class PlayerMovement : MonoBehaviour
     
     #region Crouching
 
+    [Space(10)]
+    [Header("Crouching")]
     public float crouchSpeed;
     public float crouchYScale;
+    private float startYScale;
 
     #endregion
 
@@ -47,6 +50,7 @@ public class PlayerMovement : MonoBehaviour
     [Space(10)] [Header("Keybinds")] 
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;
     [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
+    [SerializeField] private KeyCode crouchKey = KeyCode.LeftControl;
 
     #endregion
 
@@ -69,6 +73,7 @@ public class PlayerMovement : MonoBehaviour
     {
         walking,
         sprinting,
+        crouching,
         air
     }
 
@@ -76,6 +81,8 @@ public class PlayerMovement : MonoBehaviour
     {
         rigid = GetComponent<Rigidbody>();
         rigid.freezeRotation = true;
+
+        startYScale = transform.localScale.y;
     }
 
     private void Update()
@@ -112,6 +119,19 @@ public class PlayerMovement : MonoBehaviour
             
             Invoke(nameof(ResetJump), jumpCooldown);
         }
+        
+        // Start crouch
+        if (Input.GetKeyDown(crouchKey))
+        {
+            transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
+            rigid.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+        }
+        
+        // Stop crouch
+        if (Input.GetKeyUp(crouchKey))
+        {
+            transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
+        }
     }
     
     private void HandleDrag()
@@ -128,6 +148,13 @@ public class PlayerMovement : MonoBehaviour
     
     private void StateHandler()
     {
+        // Mode - Crouching
+        if (Input.GetKey(crouchKey))
+        {
+            state = MovementState.crouching;
+            moveSpeed = crouchSpeed;
+        }
+        
         // Mode - Sprinting
         if (grounded && Input.GetKey(sprintKey))
         {
